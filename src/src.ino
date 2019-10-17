@@ -72,7 +72,10 @@ void loop()
   testTextOnCanvas();
 }
 
-GFXcanvas16 canvas(130, 130);
+//GFXcanvas16 canvas(130, 130); // uses heap space
+
+// let the linker complain if not enough ram
+GFXcanvas16T<130, 130> canvas; // uses dynamic memory space
 
 void show_canvas_on_screen_timed()
 {

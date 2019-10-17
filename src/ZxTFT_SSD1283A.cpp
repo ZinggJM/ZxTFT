@@ -96,28 +96,18 @@ void ZxTFT_SSD1283A::setRotation(uint8_t r)
   startWrite();
   switch (rotation)
   {
+    // reg(0x01) bit RL 0x0100 doesn't work
     case 0:
       _writeCommandData16(0x01, _inversion_bit | 0x2183);
       _writeCommandData16(0x03, 0x6830);
       break;
     case 1:
-      //_writeCommandData16(0x01, _inversion_bit | 0x2283); // same as rotation 3, ok
-      //_writeCommandData16(0x03, 0x6838); // same as rotation 3, ok
-      // needed for canvas rotation, best compromise
-      _writeCommandData16(0x01, _inversion_bit | 0x2283); // bottom boarder bad
-      _writeCommandData16(0x03, 0x6808); // bottom boarder bad
+      _writeCommandData16(0x01, _inversion_bit | 0x2283);
+      _writeCommandData16(0x03, 0x6808);
       break;
     case 2:
-      //_writeCommandData16(0x01, _inversion_bit | 0x2183); // same as rotation 0, ok
-      //_writeCommandData16(0x03, 0x6830); // same as rotation 0, ok
-      // needed for canvas rotation, best compromise
-      _writeCommandData16(0x01, _inversion_bit | 0x2183); // r=2, left boarder bad
-      _writeCommandData16(0x03, 0x6800); // r=2, left boarder bad
-      // reg(0x01) bit RL 0x0100 doesn't work
-      //_writeCommandData16(0x01, _inversion_bit | 0x2083); // same as rotation 0, ok
-      //_writeCommandData16(0x03, 0x6830); // same as rotation 0, ok
-      //_writeCommandData16(0x01, _inversion_bit | 0x2383); // r=2, left & bottom boarder bad
-      //_writeCommandData16(0x03, 0x6820); // r=2, left & bottom boarder bad
+      _writeCommandData16(0x01, _inversion_bit | 0x2183);
+      _writeCommandData16(0x03, 0x6800);
       break;
     case 3:
       _writeCommandData16(0x01, _inversion_bit | 0x2283);
@@ -164,8 +154,8 @@ void ZxTFT_SSD1283A::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t 
       spiWrite(WIDTH - x - 1);
       spiWrite(WIDTH - x2 - 1);
       writeCommand(0x21);
-      spiWrite(WIDTH - x2 - 1);
-      spiWrite(HEIGHT - y2 + 1);
+      spiWrite(WIDTH - x - 1);
+      spiWrite(HEIGHT - y + 1);
       break;
     case 2:
       writeCommand(0x44);
@@ -175,8 +165,8 @@ void ZxTFT_SSD1283A::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t 
       spiWrite(HEIGHT - y + 1);
       spiWrite(HEIGHT - y2 + 1);
       writeCommand(0x21);
-      spiWrite(HEIGHT - y2 + 1);
-      spiWrite(WIDTH - x2 + 1);
+      spiWrite(HEIGHT - y + 1);
+      spiWrite(WIDTH - x + 1);
       break;
     case 3:
       writeCommand(0x44);

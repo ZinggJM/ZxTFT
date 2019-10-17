@@ -47,7 +47,10 @@ ZxTFT_SSD1283A screen(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardwa
 
 #endif
 
-GFXcanvas16 canvas(130, 130);
+//GFXcanvas16 canvas(130, 130); // uses heap space
+
+// let the linker complain if not enough ram
+GFXcanvas16T<130, 130> canvas; // uses dynamic memory space
 
 void show_canvas_on_screen()
 {

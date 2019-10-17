@@ -10,6 +10,8 @@
 
 #include <Adafruit_SPITFT.h>
 
+#include "GFXcanvas16T.h"
+
 class ZxTFT_SSD1283A : public Adafruit_SPITFT
 {
   public:
