@@ -19,10 +19,11 @@
 // modified by Jean-Marc Zingg to be an example for the ZxTFT_SSD1283A library (from GxTFT library)
 // original source taken from https://github.com/Bodmer/TFT_HX8357
 
-// include the hardware specific library
-#include <ZxTFT_SSD1283A.h> //Hardware-specific library
+// include the hardware specific library (select one)
+//#include <ZxTFT_SSD1283A.h> //Hardware-specific library
+#include <ZxTFT_ILI9486.h> //Hardware-specific library
 
-// adapt the constructor parameters to your wiring for the appropriate processor conditional, 
+// adapt the constructor parameters to your wiring for the appropriate processor conditional,
 // or add a new one or adapt the catch all other default
 
 #ifdef _ZxTFT_SSD1283A_H_
@@ -47,6 +48,14 @@ ZxTFT_SSD1283A screen(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardwa
 
 #endif
 
+#if defined(_ZxTFT_ILI9486_H_)
+#if defined (ESP8266)
+ZxTFT_ILI9486 screen(/*CS=D8*/ SS, /*DC=D4*/ 2, /*RST=D3*/ 0); //hardware spi,cs,cd,reset
+#elif defined(ARDUINO_ARCH_SAM)
+ZxTFT_ILI9486 screen(/*CS=10*/ SS, /*DC=*/ 6, /*RST=*/ 5); // my proto board
+#endif
+#endif
+
 //GFXcanvas16 canvas(130, 130); // uses heap space
 
 // let the linker complain if not enough ram
@@ -69,7 +78,7 @@ void show_canvas_on_screen_timed()
 #define yield()
 #endif
 
-#define  BLACK   0x0000
+#define BLACK   0x0000
 #define BLUE    0x001F
 #define RED     0xF800
 #define GREEN   0x07E0
@@ -86,6 +95,13 @@ void setup()
   //Serial.println(String(controller.name) + " Test on " + String(io.name));
 
   screen.init();
+
+#if defined(_ZxTFT_ILI9486_H_)
+  // my TFT uses BGR, uncomment for RGB panel
+  //tft.invertDisplay(false); // set to false for RGB
+#endif
+
+  screen.fillScreen(BLACK);
 
   Serial.println("screen.init() done");
 

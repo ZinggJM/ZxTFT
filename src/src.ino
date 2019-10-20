@@ -1,26 +1,41 @@
 // original code taken from https://github.com/lcdwiki/LCDWIKI_SPI/tree/master/Example/Example_03_display_string/display_string
 
-#include "ZxTFT_SSD1283A.h" //Hardware-specific library
+// select the display controller class
+//#include "ZxTFT_SSD1283A.h"
+#include "ZxTFT_ILI9486.h"
+
+#if defined(_ZxTFT_SSD1283A_H_)
 
 #if (defined(TEENSYDUINO) && (TEENSYDUINO == 147))
 // for Mike's Artificial Horizon
-ZxTFT_SSD1283A mylcd(/*CS=*/ 10, /*DC=*/ 15, /*RST=*/ 14, /*LED=*/ -1); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=*/ 10, /*DC=*/ 15, /*RST=*/ 14, /*LED=*/ -1); //hardware spi,cs,cd,reset,led
 
 // for my wirings used for e-paper displays:
 #elif defined (ESP8266)
-ZxTFT_SSD1283A mylcd(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*LED=D2*/ 4); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*LED=D2*/ 4); //hardware spi,cs,cd,reset,led
 #elif defined(ESP32)
-ZxTFT_SSD1283A mylcd(/*CS=5*/ SS, /*DC=*/ 17, /*RST=*/ 16, /*LED=*/ 4); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=5*/ SS, /*DC=*/ 17, /*RST=*/ 16, /*LED=*/ 4); //hardware spi,cs,cd,reset,led
 #elif defined(_BOARD_GENERIC_STM32F103C_H_)
-ZxTFT_SSD1283A mylcd(/*CS=4*/ SS, /*DC=*/ 3, /*RST=*/ 2, /*LED=*/ 1); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=4*/ SS, /*DC=*/ 3, /*RST=*/ 2, /*LED=*/ 1); //hardware spi,cs,cd,reset,led
 #elif defined(__AVR)
-ZxTFT_SSD1283A mylcd(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware spi,cs,cd,reset,led
 #else
 // catch all other default
-ZxTFT_SSD1283A mylcd(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware spi,cs,cd,reset,led
+ZxTFT_SSD1283A tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware spi,cs,cd,reset,led
 #endif
 
-#define  BLACK   0x0000
+#endif
+
+#if defined(_ZxTFT_ILI9486_H_)
+#if defined (ESP8266)
+ZxTFT_ILI9486 tft(/*CS=D8*/ SS, /*DC=D4*/ 2, /*RST=D3*/ 0); //hardware spi,cs,cd,reset
+//ZxTFT_ILI9486 tft(/*CS=D8*/ SS, /*DC=D4*/ 2, MOSI, SCK, /*RST=D3*/ 0); // my proto board
+#elif defined(ARDUINO_ARCH_SAM)
+ZxTFT_ILI9486 tft(/*CS=10*/ SS, /*DC=*/ 6, /*RST=*/ 5); // my proto board
+#endif
+#endif
+
+#define BLACK   0x0000
 #define BLUE    0x001F
 #define RED     0xF800
 #define GREEN   0x07E0
@@ -34,9 +49,13 @@ void setup()
   Serial.begin(115200);
   Serial.println();
   Serial.println("setup");
-  mylcd.init();
+  tft.init();
+#if defined(_ZxTFT_ILI9486_H_)
+  // my TFT uses BGR, uncomment for RGB panel
+  //tft.invertDisplay(false); // set to false for RGB
+#endif
   Serial.println("init() done");
-  mylcd.fillScreen(BLACK);
+  tft.fillScreen(BLACK);
   Serial.println("setup done");
 }
 
@@ -45,26 +64,26 @@ void loop()
   for (uint8_t r = 0; r < 4; r++)
   {
     //Serial.print("rotation "); Serial.println(r);
-    mylcd.setRotation(r);
-    mylcd.fillScreen(0x0000);
-    mylcd.setCursor(0, 0);
-    mylcd.setTextColor(RED, BLACK);
-    mylcd.setTextSize(1);
-    mylcd.println("Hello World!");
-    mylcd.println(01234.56789, 2);
-    mylcd.println(0xDEADBEF, HEX);
+    tft.setRotation(r);
+    tft.fillScreen(0x0000);
+    tft.setCursor(0, 0);
+    tft.setTextColor(RED, BLACK);
+    tft.setTextSize(1);
+    tft.println("Hello World!");
+    tft.println(01234.56789, 2);
+    tft.println(0xDEADBEF, HEX);
 
-    mylcd.setTextColor(GREEN);
-    mylcd.setTextSize(2);
-    mylcd.println("Hello");
-    mylcd.println(01234.56789, 2);
-    mylcd.println(0xDEADBEF, HEX);
+    tft.setTextColor(GREEN);
+    tft.setTextSize(2);
+    tft.println("Hello");
+    tft.println(01234.56789, 2);
+    tft.println(0xDEADBEF, HEX);
 
-    mylcd.setTextColor(BLUE);
-    mylcd.setTextSize(3);
-    mylcd.println("Hello");
-    mylcd.println(01234.56789, 2);
-    mylcd.println(0xDEADBEF, HEX);
+    tft.setTextColor(BLUE);
+    tft.setTextSize(3);
+    tft.println("Hello");
+    tft.println(01234.56789, 2);
+    tft.println(0xDEADBEF, HEX);
     //Serial.print("rotation "); Serial.print(r); Serial.println(" done");
 
     delay(5000);
@@ -80,7 +99,7 @@ GFXcanvas16T<130, 130> canvas; // uses dynamic memory space
 void show_canvas_on_screen_timed()
 {
   uint32_t start = micros();
-  mylcd.drawRGBBitmap(0, 0, canvas.getBuffer(), canvas.width(), canvas.height());
+  tft.drawRGBBitmap(0, 0, canvas.getBuffer(), canvas.width(), canvas.height());
   uint32_t elapsed = micros() - start;
   Serial.print(F("show_canvas_on_screen    ")); Serial.println(elapsed);
 }
@@ -110,9 +129,13 @@ void testTextOnCanvas()
   canvas.println("in the gobberwarts");
   canvas.println("with my blurglecruncheon,");
   canvas.println("see if I don't!");
+  if ((canvas.width() < tft.width()) || canvas.height() < tft.height())
+  {
+    tft.fillScreen(BLACK);
+  }
   for (uint8_t r = 0; r < 4; r++)
   {
-    mylcd.setRotation(r);
+    tft.setRotation(r);
     show_canvas_on_screen_timed();
     delay(5000);
   }

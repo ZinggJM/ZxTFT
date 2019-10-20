@@ -19,8 +19,9 @@
 // modified by Jean-Marc Zingg to be an example for the ZxTFT_SSD1283A library (from GxTFT library)
 // original source taken from https://github.com/Bodmer/TFT_HX8357
 
-// include the hardware specific library
-#include <ZxTFT_SSD1283A.h> //Hardware-specific library
+// include the hardware specific library (select one)
+//#include <ZxTFT_SSD1283A.h> //Hardware-specific library
+#include <ZxTFT_ILI9486.h> //Hardware-specific library
 
 // adapt the constructor parameters to your wiring for the appropriate processor conditional, 
 // or add a new one or adapt the catch all other default
@@ -47,6 +48,14 @@ ZxTFT_SSD1283A tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware 
 
 #endif
 
+#if defined(_ZxTFT_ILI9486_H_)
+#if defined (ESP8266)
+ZxTFT_ILI9486 tft(/*CS=D8*/ SS, /*DC=D4*/ 2, /*RST=D3*/ 0); // my proto board
+#elif defined(ARDUINO_ARCH_SAM)
+ZxTFT_ILI9486 tft(/*CS=10*/ SS, /*DC=*/ 6, /*RST=*/ 5); // my proto board
+#endif
+#endif
+
 #if !defined(ESP8266)
 #define yield()
 #endif
@@ -68,6 +77,11 @@ void setup()
   //Serial.println(String(controller.name) + " Test on " + String(io.name));
 
   tft.init();
+
+#if defined(_ZxTFT_ILI9486_H_)
+  // my TFT uses BGR, uncomment for RGB panel
+  //tft.invertDisplay(false); // set to false for RGB
+#endif
 
   Serial.println("tft.init() done");
 
