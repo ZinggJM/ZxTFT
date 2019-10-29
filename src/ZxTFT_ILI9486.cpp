@@ -1,5 +1,6 @@
 // created by Jean-Marc Zingg to be the ZxTFT_ILI9486 class for the ZxTFT library (instead of the GxCTRL_ILI9486 class for the GxTFT library)
 // code extracts taken from https://github.com/Bodmer/TFT_HX8357
+// spi kludge handling solution found in https://github.com/Bodmer/TFT_eSPI
 // code extracts taken from https://github.com/adafruit/Adafruit-GFX-Library
 //
 // License: GNU GENERAL PUBLIC LICENSE V3, see LICENSE
@@ -7,7 +8,7 @@
 
 #include "ZxTFT_ILI9486.h"
 
-#define SPI_SPEED 27000000
+#define SPI_SPEED 20000000 // max reliable speed is 20Mhz for RPi SPI kludge
 //#define SPI_SPEED 4000000
 
 #define ILI9486_CASET 0x2A
@@ -24,44 +25,45 @@
 
 ZxTFT_ILI9486::ZxTFT_ILI9486(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin) :
 #if defined(ESP8266)
-  Adafruit_SPITFT(320, 480, cs_pin, dc_pin, rst_pin), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(320, 480, cs_pin, dc_pin, rst_pin)
 #else
-  Adafruit_SPITFT(320, 480, &SPI, cs_pin, dc_pin, rst_pin), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(320, 480, &SPI, cs_pin, dc_pin, rst_pin)
 #endif
 {
+  _spi16_mode = true;
   _bgr = MADCTL_BGR;
-  _cs = cs_pin;
-  _dc = dc_pin;
 }
 
 ZxTFT_ILI9486::ZxTFT_ILI9486(int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin) :
-  Adafruit_SPITFT(320, 480, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(320, 480, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
 {
+  _spi16_mode = true;
   _bgr = MADCTL_BGR;
-  _cs = cs_pin;
-  _dc = dc_pin;
 }
 
 ZxTFT_ILI9486::ZxTFT_ILI9486(uint16_t width, uint16_t height,
                              SPIClass *spi, int8_t cs_pin, int8_t dc_pin, int8_t rst_pin) :
 #if defined(ESP8266)
-  Adafruit_SPITFT(width, height, cs_pin, dc_pin, rst_pin), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(width, height, cs_pin, dc_pin, rst_pin)
 #else
-  Adafruit_SPITFT(width, height, spi, cs_pin, dc_pin, rst_pin), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(width, height, spi, cs_pin, dc_pin, rst_pin)
 #endif
 {
+  _spi16_mode = true;
   _bgr = MADCTL_BGR;
-  _cs = cs_pin;
-  _dc = dc_pin;
 }
 
 ZxTFT_ILI9486::ZxTFT_ILI9486(uint16_t width, uint16_t height,
                              int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin) :
-  Adafruit_SPITFT(width, height, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1), _spi_settings(SPI_SPEED, MSBFIRST, SPI_MODE0)
+  SPI_GFX_Class(width, height, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
 {
+  _spi16_mode = true;
   _bgr = MADCTL_BGR;
-  _cs = cs_pin;
-  _dc = dc_pin;
+}
+
+void ZxTFT_ILI9486::setSpiKludge(bool rpi_spi16_mode)
+{
+  _spi16_mode = rpi_spi16_mode;
 }
 
 void ZxTFT_ILI9486::begin(uint32_t freq)
@@ -72,107 +74,177 @@ void ZxTFT_ILI9486::begin(uint32_t freq)
 void ZxTFT_ILI9486::init(uint32_t freq)
 {
   Serial.println("init");
-  digitalWrite(_cs, HIGH);
-  digitalWrite(_dc, HIGH);
-  pinMode(_cs, OUTPUT);    // Enable outputs
-  pinMode(_dc, OUTPUT);
-  SPI.begin();
-  //SPI.beginTransaction( { SPI_SPEED, MSBFIRST, SPI_MODE0 } );
-  if (_rst >= 0)
-  {
-    pinMode(_rst, OUTPUT);
-    digitalWrite(_rst, LOW);
-    delay(20);
-    digitalWrite(_rst, HIGH);
-    delay(200);
-  }
   if (!freq) freq = SPI_SPEED;
   initSPI(freq);
-  // this controller needs separate transactions; reason _dc before _cs
-  // _dc Data/Command needs be set before activating CS
-  _writeCommandTransaction(0x3A);
-  _writeDataTransaction(0x55);  // use 16 bits per pixel color
-  _writeCommandTransaction(0x36);
-  _writeDataTransaction(0x48);  // MX, BGR == rotation 0
-  // PGAMCTRL(Positive Gamma Control)
-  _writeCommandTransaction(0xE0);
-  _writeDataTransaction(0x0F);
-  _writeDataTransaction(0x1F);
-  _writeDataTransaction(0x1C);
-  _writeDataTransaction(0x0C);
-  _writeDataTransaction(0x0F);
-  _writeDataTransaction(0x08);
-  _writeDataTransaction(0x48);
-  _writeDataTransaction(0x98);
-  _writeDataTransaction(0x37);
-  _writeDataTransaction(0x0A);
-  _writeDataTransaction(0x13);
-  _writeDataTransaction(0x04);
-  _writeDataTransaction(0x11);
-  _writeDataTransaction(0x0D);
-  _writeDataTransaction(0x00);
-  // NGAMCTRL(Negative Gamma Control)
-  _writeCommandTransaction(0xE1);
-  _writeDataTransaction(0x0F);
-  _writeDataTransaction(0x32);
-  _writeDataTransaction(0x2E);
-  _writeDataTransaction(0x0B);
-  _writeDataTransaction(0x0D);
-  _writeDataTransaction(0x05);
-  _writeDataTransaction(0x47);
-  _writeDataTransaction(0x75);
-  _writeDataTransaction(0x37);
-  _writeDataTransaction(0x06);
-  _writeDataTransaction(0x10);
-  _writeDataTransaction(0x03);
-  _writeDataTransaction(0x24);
-  _writeDataTransaction(0x20);
-  _writeDataTransaction(0x00);
-  // Digital Gamma Control 1
-  _writeCommandTransaction(0xE2);
-  _writeDataTransaction(0x0F);
-  _writeDataTransaction(0x32);
-  _writeDataTransaction(0x2E);
-  _writeDataTransaction(0x0B);
-  _writeDataTransaction(0x0D);
-  _writeDataTransaction(0x05);
-  _writeDataTransaction(0x47);
-  _writeDataTransaction(0x75);
-  _writeDataTransaction(0x37);
-  _writeDataTransaction(0x06);
-  _writeDataTransaction(0x10);
-  _writeDataTransaction(0x03);
-  _writeDataTransaction(0x24);
-  _writeDataTransaction(0x20);
-  _writeDataTransaction(0x00);
-  _writeCommandTransaction(0x11);  // Sleep OUT
-  delay(150);   // wait some time
-  _writeCommandTransaction(0x29);  // Display ON
+  startWrite();
+  if (_spi16_mode)
+  {
+    _writeCommand16(0x3A);
+    SPI_WRITE16(0x55);  // use 16 bits per pixel color
+    _writeCommand16(0x36);
+    SPI_WRITE16(0x48);  // MX, BGR == rotation 0
+    // PGAMCTRL(Positive Gamma Control)
+    _writeCommand16(0xE0);
+    SPI_WRITE16(0x0F);
+    SPI_WRITE16(0x1F);
+    SPI_WRITE16(0x1C);
+    SPI_WRITE16(0x0C);
+    SPI_WRITE16(0x0F);
+    SPI_WRITE16(0x08);
+    SPI_WRITE16(0x48);
+    SPI_WRITE16(0x98);
+    SPI_WRITE16(0x37);
+    SPI_WRITE16(0x0A);
+    SPI_WRITE16(0x13);
+    SPI_WRITE16(0x04);
+    SPI_WRITE16(0x11);
+    SPI_WRITE16(0x0D);
+    SPI_WRITE16(0x00);
+    // NGAMCTRL(Negative Gamma Control)
+    _writeCommand16(0xE1);
+    SPI_WRITE16(0x0F);
+    SPI_WRITE16(0x32);
+    SPI_WRITE16(0x2E);
+    SPI_WRITE16(0x0B);
+    SPI_WRITE16(0x0D);
+    SPI_WRITE16(0x05);
+    SPI_WRITE16(0x47);
+    SPI_WRITE16(0x75);
+    SPI_WRITE16(0x37);
+    SPI_WRITE16(0x06);
+    SPI_WRITE16(0x10);
+    SPI_WRITE16(0x03);
+    SPI_WRITE16(0x24);
+    SPI_WRITE16(0x20);
+    SPI_WRITE16(0x00);
+    // Digital Gamma Control 1
+    _writeCommand16(0xE2);
+    SPI_WRITE16(0x0F);
+    SPI_WRITE16(0x32);
+    SPI_WRITE16(0x2E);
+    SPI_WRITE16(0x0B);
+    SPI_WRITE16(0x0D);
+    SPI_WRITE16(0x05);
+    SPI_WRITE16(0x47);
+    SPI_WRITE16(0x75);
+    SPI_WRITE16(0x37);
+    SPI_WRITE16(0x06);
+    SPI_WRITE16(0x10);
+    SPI_WRITE16(0x03);
+    SPI_WRITE16(0x24);
+    SPI_WRITE16(0x20);
+    SPI_WRITE16(0x00);
+    _writeCommand16(0x11);  // Sleep OUT
+    delay(150);   // wait some time
+    _writeCommand16(0x29);  // Display ON
+  }
+  else
+  {
+    writeCommand(0x3A);
+    spiWrite(0x55);  // use 16 bits per pixel color
+    writeCommand(0x36);
+    spiWrite(0x48);  // MX, BGR == rotation 0
+    // PGAMCTRL(Positive Gamma Control)
+    writeCommand(0xE0);
+    spiWrite(0x0F);
+    spiWrite(0x1F);
+    spiWrite(0x1C);
+    spiWrite(0x0C);
+    spiWrite(0x0F);
+    spiWrite(0x08);
+    spiWrite(0x48);
+    spiWrite(0x98);
+    spiWrite(0x37);
+    spiWrite(0x0A);
+    spiWrite(0x13);
+    spiWrite(0x04);
+    spiWrite(0x11);
+    spiWrite(0x0D);
+    spiWrite(0x00);
+    // NGAMCTRL(Negative Gamma Control)
+    writeCommand(0xE1);
+    spiWrite(0x0F);
+    spiWrite(0x32);
+    spiWrite(0x2E);
+    spiWrite(0x0B);
+    spiWrite(0x0D);
+    spiWrite(0x05);
+    spiWrite(0x47);
+    spiWrite(0x75);
+    spiWrite(0x37);
+    spiWrite(0x06);
+    spiWrite(0x10);
+    spiWrite(0x03);
+    spiWrite(0x24);
+    spiWrite(0x20);
+    spiWrite(0x00);
+    // Digital Gamma Control 1
+    writeCommand(0xE2);
+    spiWrite(0x0F);
+    spiWrite(0x32);
+    spiWrite(0x2E);
+    spiWrite(0x0B);
+    spiWrite(0x0D);
+    spiWrite(0x05);
+    spiWrite(0x47);
+    spiWrite(0x75);
+    spiWrite(0x37);
+    spiWrite(0x06);
+    spiWrite(0x10);
+    spiWrite(0x03);
+    spiWrite(0x24);
+    spiWrite(0x20);
+    spiWrite(0x00);
+    writeCommand(0x11);  // Sleep OUT
+    delay(150);   // wait some time
+    writeCommand(0x29);  // Display ON
+  }
+  endWrite();
 }
 
 void ZxTFT_ILI9486::setRotation(uint8_t r)
 {
-  rotation = r & 3;
-  _width = (rotation & 1) ? HEIGHT : WIDTH;
-  _height = (rotation & 1) ? WIDTH : HEIGHT;
-  // this controller seems to need separate transactions; reason _dc before _cs
-  // _dc Data/Command needs be set before activating CS
-  _writeCommandTransaction(ILI9486_MADCTL);
-  switch (r & 3)
+  Adafruit_GFX::setRotation(r);
+  startWrite();
+  if (_spi16_mode)
   {
-    case 0:
-      _writeDataTransaction(MADCTL_MX | _bgr);
-      break;
-    case 1:
-      _writeDataTransaction(MADCTL_MV | _bgr);
-      break;
-    case 2:
-      _writeDataTransaction(MADCTL_MY | _bgr);
-      break;
-    case 3:
-      _writeDataTransaction(MADCTL_MX | MADCTL_MY | MADCTL_MV | _bgr);
-      break;
+    _writeCommand16(ILI9486_MADCTL);
+    switch (r & 3)
+    {
+      case 0:
+        SPI_WRITE16(MADCTL_MX | _bgr);
+        break;
+      case 1:
+        SPI_WRITE16(MADCTL_MV | _bgr);
+        break;
+      case 2:
+        SPI_WRITE16(MADCTL_MY | _bgr);
+        break;
+      case 3:
+        SPI_WRITE16(MADCTL_MX | MADCTL_MY | MADCTL_MV | _bgr);
+        break;
+    }
   }
+  else
+  {
+    writeCommand(ILI9486_MADCTL);
+    switch (r & 3)
+    {
+      case 0:
+        spiWrite(MADCTL_MX | _bgr);
+        break;
+      case 1:
+        spiWrite(MADCTL_MV | _bgr);
+        break;
+      case 2:
+        spiWrite(MADCTL_MY | _bgr);
+        break;
+      case 3:
+        spiWrite(MADCTL_MX | MADCTL_MY | MADCTL_MV | _bgr);
+        break;
+    }
+  }
+  endWrite();
 }
 
 void ZxTFT_ILI9486::invertDisplay(boolean i)
@@ -187,107 +259,57 @@ void ZxTFT_ILI9486::invert(boolean i)
   invertDisplay(i);
 }
 
-#if 1
 void ZxTFT_ILI9486::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
   uint16_t xe = x + w - 1;
   uint16_t ye = y + h - 1;
-  // this controller seems to need separate transactions; reason _dc before _cs
-  // _dc Data/Command needs be set before activating CS
-  // parameters need separate transactions per byte
-  SPI_CS_HIGH(); // undo
-
-  SPI_DC_LOW();
-  SPI_CS_LOW();
-  spiWrite(ILI9486_CASET);  // Column addr set
-  SPI_CS_HIGH();
-  SPI_DC_HIGH();
-  
-  SPI_CS_LOW();
-  spiWrite(x >> 8);
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(x & 0xFF); // XSTART
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(xe >> 8);
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(xe & 0xFF); // XEND
-  SPI_CS_HIGH();
-
-  SPI_DC_LOW();
-  SPI_CS_LOW();
-  spiWrite(ILI9486_PASET);  // Row addr set
-  SPI_CS_HIGH();
-  SPI_DC_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(y >> 8);
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(y);        // YSTART
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(ye >> 8);
-  SPI_CS_HIGH();
-
-  SPI_CS_LOW();
-  spiWrite(ye);        // YEND
-  SPI_CS_HIGH();
-
-  SPI_DC_LOW();
-  SPI_CS_LOW();
-  spiWrite(ILI9486_RAMWR);  // write to RAM
-  SPI_CS_HIGH();
-  SPI_DC_HIGH();
-
-  SPI_CS_LOW(); // redo
-}
+  if (_spi16_mode)
+  {
+#if defined(_ZxTFT_GFX_H_)
+    _writeCommand16(ILI9486_CASET);
+    uint16_t columns[] = {x >> 8, x & 0xFF, xe >> 8, xe & 0xFF};
+    _writeData16(columns, 4);
+    _writeCommand16(ILI9486_PASET);
+    uint16_t rows[] = {y >> 8, y & 0xFF, ye >> 8, ye & 0xFF};
+    _writeData16(rows, 4);
+    _writeCommand16(ILI9486_RAMWR);
 #else
-void ZxTFT_ILI9486::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
-{
-  uint16_t xe = x + w - 1;
-  uint16_t ye = y + h - 1;
-  // this controller seems to need separate transactions; reason _dc before _cs
-  // _dc Data/Command needs be set before activating CS
-  _writeCommandTransaction(ILI9486_CASET);  // Column addr set
-  _writeDataTransaction(x >> 8);
-  _writeDataTransaction(x & 0xFF); // XSTART
-  _writeDataTransaction(xe >> 8);
-  _writeDataTransaction(xe & 0xFF); // XEND
-  _writeCommandTransaction(ILI9486_PASET);  // Row addr set
-  _writeDataTransaction(y >> 8);
-  _writeDataTransaction(y);        // YSTART
-  _writeDataTransaction(ye >> 8);
-  _writeDataTransaction(ye);        // YEND
-  _writeCommandTransaction(ILI9486_RAMWR);  // write to RAM
-  startWrite(); // undo endWrite();
-}
+    _writeCommand16(ILI9486_CASET);
+    SPI_WRITE16(x >> 8);
+    SPI_WRITE16(x & 0xFF);
+    SPI_WRITE16(xe >> 8);
+    SPI_WRITE16(xe & 0xFF);
+    _writeCommand16(ILI9486_PASET);
+    SPI_WRITE16(y >> 8);
+    SPI_WRITE16(y & 0xFF);
+    SPI_WRITE16(ye >> 8);
+    SPI_WRITE16(ye & 0xFF);
+    _writeCommand16(ILI9486_RAMWR);
 #endif
+  }
+  else
+  {
+    writeCommand(ILI9486_CASET);
+    SPI_WRITE16(x);
+    SPI_WRITE16(xe);
+    writeCommand(ILI9486_PASET);
+    SPI_WRITE16(y);
+    SPI_WRITE16(ye);
+    writeCommand(ILI9486_RAMWR);
+  }
+}
 
 void ZxTFT_ILI9486::enableDisplay(boolean enable)
 {
-  _writeCommandTransaction(enable ? 0x29 : 0x28);  // Display ON / Display OFF
+  startWrite();
+  if (_spi16_mode) _writeCommand16(enable ? 0x29 : 0x28);  // Display ON / Display OFF
+  else  writeCommand(enable ? 0x29 : 0x28);  // Display ON / Display OFF
+  endWrite();
 }
 
-void ZxTFT_ILI9486::_writeCommandTransaction(uint8_t cmd)
+void ZxTFT_ILI9486::_writeCommand16(uint16_t cmd)
 {
-  if (_dc >= 0) digitalWrite(_dc, LOW); // dc before _cs
-  startWrite();
-  spiWrite(cmd);
-  endWrite();
-  if (_dc >= 0) digitalWrite(_dc, HIGH);
-}
-
-void ZxTFT_ILI9486::_writeDataTransaction(uint8_t data)
-{
-  startWrite();
-  spiWrite(data);
-  endWrite();
+  SPI_DC_LOW();
+  SPI_WRITE16(cmd);
+  SPI_DC_HIGH();
 }

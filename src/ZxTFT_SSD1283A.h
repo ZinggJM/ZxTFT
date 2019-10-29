@@ -9,10 +9,17 @@
 #define _ZxTFT_SSD1283A_H_
 
 #include <Adafruit_SPITFT.h>
-
 #include "GFXcanvas16T.h"
+// comment out to use only Adafruit_SPITFT
+//#include "ZxTFT_GFX.h"
 
-class ZxTFT_SSD1283A : public Adafruit_SPITFT
+#ifdef _ZxTFT_GFX_H_
+#define SPI_GFX_Class ZxTFT_GFX
+#else
+#define SPI_GFX_Class Adafruit_SPITFT
+#endif
+
+class ZxTFT_SSD1283A : public SPI_GFX_Class
 {
   public:
     ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin, int8_t bl_pin);

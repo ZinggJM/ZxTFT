@@ -94,6 +94,11 @@ void setup()
   Serial.println("setup");
   //Serial.println(String(controller.name) + " Test on " + String(io.name));
 
+#if defined(_ZxTFT_ILI9486_H_)
+  // uncomment for normal SPI mode, used for "special" SPI circuit found e.g. on 3.5" RPI HVGA display
+  //setSpiKludge(false); // rpi_spi16_mode
+#endif
+
   screen.init();
 
 #if defined(_ZxTFT_ILI9486_H_)

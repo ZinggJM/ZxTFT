@@ -9,9 +9,9 @@
 
 ZxTFT_SSD1283A::ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin, int8_t bl_pin) :
 #if defined(ESP8266)
-  Adafruit_SPITFT(130, 130, cs_pin, dc_pin, rst_pin)
+  SPI_GFX_Class(130, 130, cs_pin, dc_pin, rst_pin)
 #else
-  Adafruit_SPITFT(130, 130, &SPI, cs_pin, dc_pin, rst_pin)
+  SPI_GFX_Class(130, 130, &SPI, cs_pin, dc_pin, rst_pin)
 #endif
 {
   _bl_pin = bl_pin;
@@ -19,7 +19,7 @@ ZxTFT_SSD1283A::ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin, int
 }
 
 ZxTFT_SSD1283A::ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin, int8_t bl_pin) :
-  Adafruit_SPITFT(130, 130, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
+  SPI_GFX_Class(130, 130, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
 {
   _bl_pin = bl_pin;
   _inversion_bit = 0;
@@ -28,9 +28,9 @@ ZxTFT_SSD1283A::ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, in
 ZxTFT_SSD1283A::ZxTFT_SSD1283A(uint16_t width, uint16_t height,
                                    SPIClass *spi, int8_t cs_pin, int8_t dc_pin, int8_t rst_pin, int8_t bl_pin) :
 #if defined(ESP8266)
-  Adafruit_SPITFT(width, height, cs_pin, dc_pin, rst_pin)
+  SPI_GFX_Class(width, height, cs_pin, dc_pin, rst_pin)
 #else
-  Adafruit_SPITFT(width, height, spi, cs_pin, dc_pin, rst_pin)
+  SPI_GFX_Class(width, height, spi, cs_pin, dc_pin, rst_pin)
 #endif
 {
   _bl_pin = bl_pin;
@@ -39,7 +39,7 @@ ZxTFT_SSD1283A::ZxTFT_SSD1283A(uint16_t width, uint16_t height,
 
 ZxTFT_SSD1283A::ZxTFT_SSD1283A(uint16_t width, uint16_t height,
                                    int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin, int8_t bl_pin) :
-  Adafruit_SPITFT(width, height, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
+  SPI_GFX_Class(width, height, cs_pin, dc_pin, mosi_pin, sclk_pin, rst_pin, -1)
 {
   _bl_pin = bl_pin;
   _inversion_bit = 0;
