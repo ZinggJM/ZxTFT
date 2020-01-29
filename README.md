@@ -2,7 +2,11 @@
 
 This library supports some TFTs using Adafruit_SPITFT
 
-### Version 1.0.0
+### Version 1.0.1
+- added suport for ILI9488 SPI TFT, e.g. https://www.aliexpress.com/item/32908809356.html
+- caution: this board is for 3.3V supply AND data lines
+- tested with ESP32, ESP8266, STM32F103 BluePill, Arduino Due, Arduino Pro Mini 3.3V
+#### Version 1.0.0
 - added base class ZxTFT_GFX, enhances Adafruit_SPITFT for ESP8266, ESP32
 - replaced RPi SPI kludge handling for ILI9486, better performance
 - added method setSpiKludge() for ILI9486

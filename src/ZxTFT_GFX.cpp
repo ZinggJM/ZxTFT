@@ -37,7 +37,7 @@ void ZxTFT_GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t co
   if ((w < 1) || (h < 1)) return;
   startWrite();
   setAddrWindow(x, y, w, h);
-  _writeData16(color, uint32_t(w) * uint32_t(h));
+  _writeColor16(color, uint32_t(w) * uint32_t(h));
   endWrite();
 }
 
@@ -56,7 +56,7 @@ void ZxTFT_GFX::fillScreen(uint16_t color)
   fillRect(0, 0, WIDTH, HEIGHT, color);
 }
 
-void ZxTFT_GFX::_writeData16(uint16_t data, uint32_t n)
+void ZxTFT_GFX::_writeColor16(uint16_t data, uint32_t n)
 {
   if (0 == connection) // TFT_HARD_SPI
   {
@@ -90,13 +90,15 @@ void ZxTFT_GFX::_writeData16(uint16_t data, uint32_t n)
 #define SPI_WRITE_BYTES(data, n) SPI.transfer(SS, data, n)
 #elif (TEENSYDUINO == 147)
 #define SPI_WRITE_BYTES(data, n) SPI.transfer(data, 0, n)
+#elif defined(ARDUINO_ARCH_STM32F1) || defined(ARDUINO_ARCH_STM32F4)
+#define SPI_WRITE_BYTES(data, n) SPI.write(data, n)
 #else
 // valid for all other platforms? else comment out next line
 #define SPI_WRITE_BYTES(data, n) SPI.transfer(data, n)
 #endif
 
 
-void ZxTFT_GFX::_writeData16(const uint16_t* data, uint32_t n)
+void ZxTFT_GFX::_writeColor16(const uint16_t* data, uint32_t n)
 {
   if (0 == connection) // TFT_HARD_SPI
   {

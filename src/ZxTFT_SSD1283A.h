@@ -22,7 +22,7 @@
 class ZxTFT_SSD1283A : public SPI_GFX_Class
 {
   public:
-    ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin, int8_t bl_pin);
+    ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t rst_pin = -1, int8_t bl_pin = -1);
     ZxTFT_SSD1283A(int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin, int8_t bl_pin = -1);
     ZxTFT_SSD1283A(uint16_t width, uint16_t height, SPIClass *spi, int8_t cs_pin, int8_t dc_pin, int8_t rst_pin = -1, int8_t bl_pin = -1);
     ZxTFT_SSD1283A(uint16_t width, uint16_t height, int8_t cs_pin, int8_t dc_pin, int8_t mosi_pin, int8_t sclk_pin, int8_t rst_pin = -1, int8_t bl_pin = -1);

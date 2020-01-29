@@ -21,7 +21,8 @@
 
 // include the hardware specific library (select one)
 //#include <ZxTFT_SSD1283A.h> //Hardware-specific library
-#include <ZxTFT_ILI9486.h> //Hardware-specific library
+//#include <ZxTFT_ILI9486.h> //Hardware-specific library
+//#include <ZxTFT_ILI9488.h> //Hardware-specific library
 
 // adapt the constructor parameters to your wiring for the appropriate processor conditional, 
 // or add a new one or adapt the catch all other default
@@ -53,6 +54,23 @@ ZxTFT_SSD1283A tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*LED=*/ 7); //hardware 
 ZxTFT_ILI9486 tft(/*CS=D8*/ SS, /*DC=D4*/ 2, /*RST=D3*/ 0); // my proto board
 #elif defined(ARDUINO_ARCH_SAM)
 ZxTFT_ILI9486 tft(/*CS=10*/ SS, /*DC=*/ 6, /*RST=*/ 5); // my proto board
+#endif
+#endif
+
+#if defined(_ZxTFT_ILI9488_H_)
+// e.g. https://www.aliexpress.com/item/32908809356.html
+// note: this board is for 3.3V supply and data lines!
+#if defined (ESP8266)
+ZxTFT_ILI9488 tft(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BL=D2*/ 4); // my epd connection shield
+#elif defined(ESP32)
+ZxTFT_ILI9488 tft(/*CS=5*/ SS, /*DC=*/ 17, /*RST=*/ 16, /*BL=*/ 4); // my epd connection proto board
+#elif defined(_BOARD_GENERIC_STM32F103C_H_) || defined(ARDUINO_ARCH_STM32)
+ZxTFT_ILI9488 tft(/*CS=4*/ SS, /*DC=*/ 3, /*RST=*/ 2, /*BL=*/ 1); // my epd connection proto board with bluepill
+#elif defined(ARDUINO_ARCH_SAM)
+ZxTFT_ILI9488 tft(/*CS=77*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*BL=*/ 7); // my epd connection shield for Arduino Due
+#elif defined(__AVR)
+//ZxTFT_ILI9488 tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*BL=*/ 7); // my UNO epd connection shield with voltage dividers does not work
+ZxTFT_ILI9488 tft(/*CS=10*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*BL=*/ 7); // my 3.3V Pro Mini epd connection board does work
 #endif
 #endif
 

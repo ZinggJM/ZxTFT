@@ -33,6 +33,7 @@ ZxTFT_SSD1283A::ZxTFT_SSD1283A(uint16_t width, uint16_t height,
   SPI_GFX_Class(width, height, spi, cs_pin, dc_pin, rst_pin)
 #endif
 {
+  (void) spi;
   _bl_pin = bl_pin;
   _inversion_bit = 0;
 }

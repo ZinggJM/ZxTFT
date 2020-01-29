@@ -24,8 +24,17 @@ class ZxTFT_GFX : public Adafruit_SPITFT
     virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
     virtual void fillScreen(uint16_t color);
   protected:
-    void _writeData16(uint16_t data, uint32_t n);
-    void _writeData16(const uint16_t* data, uint32_t n);
+    inline void _writeData16(uint16_t data, uint32_t n)
+    {
+      ZxTFT_GFX::_writeColor16(data, n);
+    }
+    inline void _writeData16(const uint16_t* data, uint32_t n)
+    {
+      ZxTFT_GFX::_writeColor16(data, n);
+    }
+    // note: only use for pixel data, RGB888 on ILI9488
+    virtual void _writeColor16(uint16_t data, uint32_t n);
+    virtual void _writeColor16(const uint16_t* data, uint32_t n);
 };
 
 #endif

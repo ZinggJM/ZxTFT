@@ -49,6 +49,7 @@ ZxTFT_ILI9486::ZxTFT_ILI9486(uint16_t width, uint16_t height,
   SPI_GFX_Class(width, height, spi, cs_pin, dc_pin, rst_pin)
 #endif
 {
+  (void) spi;
   _spi16_mode = true;
   _bgr = MADCTL_BGR;
 }
@@ -267,10 +268,10 @@ void ZxTFT_ILI9486::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h
   {
 #if defined(_ZxTFT_GFX_H_)
     _writeCommand16(ILI9486_CASET);
-    uint16_t columns[] = {x >> 8, x & 0xFF, xe >> 8, xe & 0xFF};
+    uint16_t columns[] = {uint16_t(x >> 8), uint16_t(x & 0xFF), uint16_t(xe >> 8), uint16_t(xe & 0xFF)};
     _writeData16(columns, 4);
     _writeCommand16(ILI9486_PASET);
-    uint16_t rows[] = {y >> 8, y & 0xFF, ye >> 8, ye & 0xFF};
+    uint16_t rows[] = {uint16_t(y >> 8), uint16_t(y & 0xFF), uint16_t(ye >> 8), uint16_t(ye & 0xFF)};
     _writeData16(rows, 4);
     _writeCommand16(ILI9486_RAMWR);
 #else
